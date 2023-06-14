@@ -14,7 +14,6 @@ router.get("/autocomplete/:query", async (req, res) => {
       res.status(200).json(response.data);
     })
     .catch((error) => {
-      console.log(error);
       res.status(500).json({ error: "Can't fetch results" });
     });
 });
