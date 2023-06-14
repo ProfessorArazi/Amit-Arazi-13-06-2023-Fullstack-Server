@@ -8,31 +8,49 @@ const jwt = require("jsonwebtoken");
 router.post("/signup", async (req, res) => {
   const { username, password } = req.body;
 
-  // Generate a unique userId
-  const userId = uuidv4();
-  // Hash the password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Generate a token
-  const token = jwt.sign({ userId }, "soccerbasketball");
-
-  // Insert the user into the database with an empty favorites array
-  const sql =
-    "INSERT INTO users (username, password, token, favorites, userId) VALUES (?, ?, ?, ?, ?)";
-  connection.query(
-    sql,
-    [username, hashedPassword, token, JSON.stringify([]), userId],
-    (error, results) => {
-      if (error) {
-        console.error("Error signing up:", error);
-        res.status(500).json({ error: "Failed to sign up" });
-        return;
-      }
-      res
-        .status(201)
-        .json({ message: "Signed up successfully", token, userId });
+  // Check if the username already exists in the database
+  const checkUsernameQuery =
+    "SELECT COUNT(*) AS count FROM users WHERE username = ?";
+  connection.query(checkUsernameQuery, [username], async (error, results) => {
+    if (error) {
+      console.error("Error checking username:", error);
+      res.status(500).json({ error: "Failed to sign up" });
+      return;
     }
-  );
+
+    const { count } = results[0];
+
+    if (count > 0) {
+      res.status(400).json({ error: "Username already exists" });
+      return;
+    }
+
+    // Generate a unique userId
+    const userId = uuidv4();
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Generate a token
+    const token = jwt.sign({ userId }, "soccerbasketball");
+
+    // Insert the user into the database with an empty favorites array
+    const insertUserQuery =
+      "INSERT INTO users (username, password, token, favorites, userId) VALUES (?, ?, ?, ?, ?)";
+    connection.query(
+      insertUserQuery,
+      [username, hashedPassword, token, JSON.stringify([]), userId],
+      (error, results) => {
+        if (error) {
+          console.error("Error signing up:", error);
+          res.status(500).json({ error: "Failed to sign up" });
+          return;
+        }
+        res
+          .status(201)
+          .json({ message: "Signed up successfully", token, userId });
+      }
+    );
+  });
 });
 
 // Login route
@@ -73,7 +91,9 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ error: "Failed to log in" });
         return;
       }
-      res.status(200).json({ token, userId: user.userId });
+      res
+        .status(200)
+        .json({ token, userId: user.userId, favorites: user.favorites });
     });
   });
 });
