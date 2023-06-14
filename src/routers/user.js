@@ -82,8 +82,6 @@ router.post("/login", async (req, res) => {
 
     // create and sign a JWT token
     const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET);
-    console.log(process.env.JWT_SECRET);
-    
 
     // update the user's token in the database
     const updateSql = "UPDATE users SET token = ? WHERE userId = ?";
