@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 router.post("/signup", async (req, res) => {
   const { username, password } = req.body;
 
-  // Check if the username already exists in the database
+  // check if the username already exists in the database
   const checkUsernameQuery =
     "SELECT COUNT(*) AS count FROM users WHERE username = ?";
   connection.query(checkUsernameQuery, [username], async (error, results) => {
@@ -25,15 +25,15 @@ router.post("/signup", async (req, res) => {
       return;
     }
 
-    // Generate a unique userId
+    // generate a unique userId
     const userId = uuidv4();
-    // Hash the password
+    // hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate a token
-    const token = jwt.sign({ userId }, "soccerbasketball");
+    // generate a token
+    const token = jwt.sign({ userId }, process.env.JWT_SECRET);
 
-    // Insert the user into the database with an empty favorites array
+    // insert the user into the database with an empty favorites array
     const insertUserQuery =
       "INSERT INTO users (username, password, token, favorites, userId) VALUES (?, ?, ?, ?, ?)";
     connection.query(
@@ -53,11 +53,11 @@ router.post("/signup", async (req, res) => {
   });
 });
 
-// Login route
+// login route
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  // Retrieve the user from the database
+  // get the user from the database
   const sql = "SELECT * FROM users WHERE username = ?";
   connection.query(sql, [username], async (error, results) => {
     if (error) {
@@ -66,13 +66,13 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    // Check if user exists
+    // check if user exists
     if (results.length === 0) {
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
 
-    // Compare the hashed password
+    // compare the hashed password
     const user = results[0];
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
@@ -80,10 +80,10 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    // Create and sign a JWT token
-    const token = jwt.sign({ userId: user.userId }, "soccerbasketball");
+    // create and sign a JWT token
+    const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET);
 
-    // Update the user's token in the database
+    // update the user's token in the database
     const updateSql = "UPDATE users SET token = ? WHERE userId = ?";
     connection.query(updateSql, [token, user.userId], (error) => {
       if (error) {

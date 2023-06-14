@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const { connection } = require("../db/mysql");
 
 const verifyTokenAndUserId = (req, res, next) => {
+  // checking if the token belongs to the user
+
   const { token, userId } = req.body;
 
   if (!token || !userId) {
@@ -11,7 +13,7 @@ const verifyTokenAndUserId = (req, res, next) => {
     return;
   }
 
-  jwt.verify(token, "soccerbasketball", (error, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
     if (error) {
       res.status(401).json({ error: "Invalid token" });
       return;
@@ -27,16 +29,16 @@ const verifyTokenAndUserId = (req, res, next) => {
   });
 };
 
-// Get favorites route
+// get favorites route
 router.post("/favorites", verifyTokenAndUserId, (req, res) => {
   const { userId } = req.body;
 
-  // Retrieve favorites from the database for the user with userId
+  // getting favorites from the database for the user with userId
   const selectSql = "SELECT favorites FROM users WHERE userId = ?";
   connection.query(selectSql, [userId], (error, results) => {
     if (error) {
-      console.error("Error retrieving favorites:", error);
-      res.status(500).json({ error: "Failed to retrieve favorites" });
+      console.error("Error getting favorites:", error);
+      res.status(500).json({ error: "Failed to get favorites" });
       return;
     }
     const favorites = JSON.parse(results[0].favorites);
@@ -44,31 +46,31 @@ router.post("/favorites", verifyTokenAndUserId, (req, res) => {
   });
 });
 
-// Delete favorite route
+// delete favorite route
 router.post("/favorites/delete", verifyTokenAndUserId, (req, res) => {
   const { userId, favoriteId } = req.body;
 
-  // Retrieve favorites from the database for the user with userId
+  // getting favorites from the database for the user with userId
   const selectSql = "SELECT favorites FROM users WHERE userId = ?";
   connection.query(selectSql, [userId], (error, results) => {
     if (error) {
-      console.error("Error retrieving favorites:", error);
-      res.status(500).json({ error: "Failed to retrieve favorites" });
+      console.error("Error getting favorites:", error);
+      res.status(500).json({ error: "Failed to get favorites" });
       return;
     }
 
     const favorites = JSON.parse(results[0].favorites);
 
-    // Find the index of the favorite to be deleted
+    // find the index of the favorite to be deleted
     const index = favorites.findIndex(
       (favorite) => favorite.Key === favoriteId
     );
 
-    // If the favorite is found, remove it from the array
+    // if the favorite is found, remove it from the array
     if (index !== -1) {
       favorites.splice(index, 1);
 
-      // Update the favorites in the database
+      // update the favorites in the database
       const updateSql = "UPDATE users SET favorites = ? WHERE userId = ?";
       connection.query(
         updateSql,
@@ -90,22 +92,22 @@ router.post("/favorites/delete", verifyTokenAndUserId, (req, res) => {
   });
 });
 
-// Add favorite route
+// add favorite route
 router.post("/favorites/new", verifyTokenAndUserId, (req, res) => {
   const { newFavorite, userId } = req.body;
 
-  // Retrieve favorites from the database for the user with userId
+  // getting favorites from the database for the user with userId
   const selectSql = "SELECT favorites FROM users WHERE userId = ?";
   connection.query(selectSql, [userId], (error, results) => {
     if (error) {
-      console.error("Error retrieving favorites:", error);
-      res.status(500).json({ error: "Failed to retrieve favorites" });
+      console.error("Error getting favorites:", error);
+      res.status(500).json({ error: "Failed to get favorites" });
       return;
     }
 
     const favorites = JSON.parse(results[0].favorites);
 
-    // Check if the new favorite already exists
+    // check if the new favorite already exists
     const existingFavorite = favorites.find(
       (favorite) => favorite.Key === newFavorite.Key
     );
@@ -114,10 +116,10 @@ router.post("/favorites/new", verifyTokenAndUserId, (req, res) => {
       return;
     }
 
-    // Add the new favorite to the array
+    // add the new favorite to the array
     favorites.push(newFavorite);
 
-    // Update the favorites in the database
+    // update the favorites in the database
     const updateSql = "UPDATE users SET favorites = ? WHERE userId = ?";
     connection.query(
       updateSql,

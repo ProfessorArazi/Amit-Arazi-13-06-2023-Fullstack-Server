@@ -4,6 +4,8 @@ const axios = require("axios");
 const { connection } = require("../db/mysql");
 
 router.get("/autocomplete/:query", async (req, res) => {
+  // getting autocomplete results
+
   const { query } = req.params;
   await axios(
     `${process.env.API_URL}/locations/v1/cities/autocomplete?apikey=${process.env.API_KEY}&q=${query}`
@@ -11,13 +13,13 @@ router.get("/autocomplete/:query", async (req, res) => {
     .then((response) => {
       res.status(200).json(response.data);
     })
-    .catch((error) => res.status(500).json({ error }));
+    .catch((error) => res.status(500).json({ error: "Can't fetch results" }));
 });
 
 router.get("/getCurrentWeather/:key", async (req, res) => {
   const { key } = req.params;
 
-  // Check if key exists in the weather table
+  // check if key exists in the weather table
   const checkKeySql = "SELECT * FROM weather WHERE cityKey = ?";
   connection.query(checkKeySql, [key], (error, results) => {
     if (error) {
@@ -26,11 +28,14 @@ router.get("/getCurrentWeather/:key", async (req, res) => {
       return;
     }
     if (results.length === 0) {
-      // Fetch weather data from the API
+      // fetch weather data from the API
       fetchWeatherData(key);
     } else {
-      // Key exists in the weather table, retrieve and return the weather data
+      // key exists in the weather table, get and return the weather data
       const weatherData = results[0];
+
+      // the object structure is the same as the structure returned by the weather API
+
       res.status(200).json({
         weatherData: [
           {
@@ -46,15 +51,17 @@ router.get("/getCurrentWeather/:key", async (req, res) => {
     }
   });
 
-  // Function to fetch weather data from the API and save it in the weather table
+  // function to fetch weather data from the API and save it in the weather table
   const fetchWeatherData = (locationKey) => {
-    // Make API request to fetch weather data
+    // make API request to fetch weather data
     axios
-      .get(`${process.env.API_URL}/currentconditions/v1/${locationKey}?apikey=${process.env.API_KEY}`)
+      .get(
+        `${process.env.API_URL}/currentconditions/v1/${locationKey}?apikey=${process.env.API_KEY}`
+      )
       .then((response) => {
         const weatherData = response.data;
 
-        // Save the weather data in the weather table
+        // save the weather data in the weather table
         const saveDataSql =
           "INSERT INTO weather (cityKey, weatherText, temperature) VALUES (?, ?, ?)";
         connection.query(
