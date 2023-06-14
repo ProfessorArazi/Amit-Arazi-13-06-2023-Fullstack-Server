@@ -13,7 +13,10 @@ router.get("/autocomplete/:query", async (req, res) => {
     .then((response) => {
       res.status(200).json(response.data);
     })
-    .catch((error) => res.status(500).json({ error: "Can't fetch results" }));
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: "Can't fetch results" });
+    });
 });
 
 router.get("/getCurrentWeather/:key", async (req, res) => {
