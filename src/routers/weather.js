@@ -4,7 +4,7 @@ const axios = require("axios");
 const { connection } = require("../db/mysql");
 
 router.get("/autocomplete/:query", async (req, res) => {
-  // getting autocomplete results
+  //  getting autocomplete results
 
   const { query } = req.params;
   await axios(
